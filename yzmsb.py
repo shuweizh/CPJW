@@ -17,7 +17,7 @@ class CheckNum:
     # 对于识别成字母的 采用该表进行修正
     rep = {'O':'0', 'I':'1', 'L':'1', 'Z':'2', 'S':'8', '?':'9'}
 
-    threshold = 140
+    threshold = 145
     table = []
     for i in range(256):
         if i < threshold:
@@ -121,10 +121,12 @@ class CheckNum:
         for x in range(width):
             for y in range(hight):
                 r,g,b=pixdata[x,y]
-                if r>(g+b)*1.1:
+                #if r>(g+b)*1.5 and r>90:
+                if r > (g + b) * 1.5:
                     pixdata_ry[x,y] = 0
                 else:
                     pixdata_ry[x, y] = 1
+
         out.save(path.join(path.dirname(name), '2b'+path.basename(name)))
         out1 = out.load()
 
@@ -139,8 +141,8 @@ class CheckNum:
                     out1[x, y] = 0
         out.save(path.join(path.dirname(name), '29b'+path.basename(name)))
         # 识别
-        #text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
-        text = pytesseract.image_to_string(out)
+        text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
+        #text = pytesseract.image_to_string(out)
         # 识别对吗
         text = text.strip()
         text = text.upper()
@@ -252,11 +254,23 @@ class CheckNum:
         print '验证码-F1:',r1
         r2 = self.getverify2(filePath)
         print '验证码-F2:', r2
-        r=''
-        if len(r1) != len(r2) and len(r1)==4:
+        r = r2
+
+        ##when r1!=r2, usr r1 4 replace r2 1
+        rep_dict={'4':'1'}
+
+        if r1 == r2:
             r = r1
-        else:
+        # main r2
+        elif len(r1) == 4 and len(r2) == 4:
+            for i in range(4):
+                for c in rep_dict.keys():
+                    if r1[i] == c and r2[i]==rep_dict[c]:
+                        r2 = ''.join((r2[0:i],c,r2[i+1:]))
             r = r2
+        else:
+            r = (r1 if len(r1)==4 else r2)
+
         print '验证码-R:', r
         return r
 

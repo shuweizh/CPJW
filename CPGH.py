@@ -4,7 +4,7 @@
 import sys
 import urllib2
 import urllib
-import Requests
+import requests
 import cookielib
 import zlib
 from HTMLParser import HTMLParser
@@ -16,7 +16,61 @@ sys.setdefaultencoding("utf8")
 
 
 #####################################################
+class ReqWeb:
+    def __init__(self):
+        self.session = requests.Session()
+        self.header = {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6',
+            'Cache-Control': 'max-age=0',
+            #'Connection': 'keep-alive',
+            'Host': 'cpzjwyy.bjchp.gov.cn',
+            'Upgrade-Insecure-Requests': '1',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'
+        }
+    def ungzip_html(self, response):
+        try:  # try decompress
+            data = ''
+            origData = response.read()
+            if ('Content-Encoding' in response.info()) and (response.info()['Content-Encoding'] == 'gzip'):
+                data = zlib.decompress(origData, 16 + zlib.MAX_WBITS)
+            return data
+        except Exception, e:
+            raise Exception('ungzip error:' + str(e))
 
+    def get(self, url ,params=[]):
+        try:
+            if len(params)>0:
+                req = self.session.get(url, params=params, headers = self.header)
+            else:
+                req = self.session.get(url, headers = self.header)
+
+            #print req.text
+
+            return req.text
+        except Exception, e:
+            print 'Get url:[' + url +'] error, params:[' + str(params) +'], reason:[' + str(e)
+            raise Exception('login error:' + str(e))
+
+    def post(self, url ,params=[]):
+        try:
+            if len(params)>0:
+                req = self.session.post(url, data=params, headers = self.header)
+            else:
+                req = self.session.post(url, headers = self.header)
+
+            #print req.text
+
+            return req.text
+        except Exception, e:
+            print 'Post url:[' + url +'] error, params:[' + str(params) +'], reason:[' + str(e)
+            raise Exception('login error:' + str(e))
+
+    def dlFile(self, url, filePath):
+        req = self.session.get(url, headers = self.header)
+        with open(filePath, 'wb') as dlf:
+            dlf.write(req.content)
 
 class WebOp:
     def __init__(self):
@@ -74,11 +128,8 @@ class WebOp:
 
         if data == None:
             return
-
-        file = open(filePath, "wb")
-        file.write(data)
-        file.flush()
-        file.close()
+        with open(filePath, 'wb') as dlf:
+            dlf.write(data)
 
 
 class webParser(HTMLParser):
@@ -124,15 +175,15 @@ class webParser(HTMLParser):
 
 
 class CPJW:
-    web = WebOp()
+    web = ReqWeb()
     parser = webParser()
     first_url = 'http://cpzjwyy.bjchp.gov.cn/fr/login.aspx'
     login_url = 'http://cpzjwyy.bjchp.gov.cn/fr/main.aspx'
     checkimg_url = 'http://cpzjwyy.bjchp.gov.cn/common/CheckImage.aspx'
-    fqgm_url = 'http://cpzjwyy.bjchp.gov.cn/fr/revform.aspx?l=0&b=24'
+    fqgm_url = 'http://cpzjwyy.bjchp.gov.cn/fr/revform.aspx'
     checkimgPath = 'checknum.jpg'
     def login(self):
-        result = self.web.brower(self.first_url)
+        result = self.web.get(self.first_url)
         print '打开登陆网页成功'
         self.parser.feed(result)
         tmpParams = self.parser.key
@@ -151,13 +202,14 @@ class CPJW:
         }
         self.getCheckNum()
 
-        result = self.web.brower(self.login_url,loginparams)
+        result = self.web.post(self.login_url,loginparams)
         if result.__contains__('欢迎使用昌平区房产权属登记中心网上预约系统'):
             print '登录成功'
 
 
     def fqgm(self):
-        result = self.web.brower(self.fqgm_url)
+        fqgmparams = {'l':'0', 'b':'24'}
+        result = self.web.get(self.fqgm_url, params=fqgmparams)
         if result.__contains__('登录预约平台'):
             print '登录'+self.fqgm_url+' error'
         else:
