@@ -4,6 +4,7 @@
 import sys
 import urllib2
 import urllib
+import Requests
 import cookielib
 import zlib
 from HTMLParser import HTMLParser

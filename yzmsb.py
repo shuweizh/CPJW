@@ -3,6 +3,7 @@
 
 import urllib2
 import cookielib
+from os import path
 
 import pytesseract
 from PIL import Image
@@ -25,7 +26,7 @@ class CheckNum:
             table.append(1)
 
 
-    def get_file(self,url, webModel):
+    def get_file(self,url):
         try:
             cj = cookielib.LWPCookieJar()
             opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
@@ -68,10 +69,10 @@ class CheckNum:
         # 转化到灰度图
         imgry = im.convert('L')
         # 保存图像
-        imgry.save('g' + name)
+        imgry.save(path.join(path.dirname(name), '1g'+path.basename(name)))
         # 二值化，采用阈值分割法，threshold为分割点
         out = imgry.point(self.table, '1')
-        out.save('b' + name)
+        out.save(path.join(path.dirname(name), '1b'+path.basename(name)))
         out1=out.load()
 
         # 9宫格计算,去噪
@@ -83,11 +84,12 @@ class CheckNum:
                     out1[x,y]=1
                 else:
                     out1[x,y]=0
-        out.save('1b' + name)
+        out.save(path.join(path.dirname(name), '19b'+path.basename(name)))
         #out1.save('b' + name)
 
 
         # 识别
+        #text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
         text = pytesseract.image_to_string(out)
         # 识别对吗
         text = text.strip()
@@ -109,7 +111,7 @@ class CheckNum:
         #imgry.save('g' + name)
         # 二值化，采用阈值分割法，threshold为分割点
         out = imgry.point(self.table, '1')
-        out.save('2b' + name)
+        out.save(path.join(path.dirname(name), '2g'+path.basename(name)))
 
         pixdata = im.load()
         pixdata_ry = out.load()
@@ -123,7 +125,7 @@ class CheckNum:
                     pixdata_ry[x,y] = 0
                 else:
                     pixdata_ry[x, y] = 1
-        out.save('2g'+name)
+        out.save(path.join(path.dirname(name), '2b'+path.basename(name)))
         out1 = out.load()
 
         # 9宫格计算,去噪
@@ -135,8 +137,9 @@ class CheckNum:
                     out1[x, y] = 1
                 else:
                     out1[x, y] = 0
-        out.save('3g' + name)
+        out.save(path.join(path.dirname(name), '29b'+path.basename(name)))
         # 识别
+        #text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
         text = pytesseract.image_to_string(out)
         # 识别对吗
         text = text.strip()
@@ -242,26 +245,20 @@ class CheckNum:
     def getCheckNumByUrl(self,url):
         filePath = "checknum.jpg"
         self.save_file(filePath, self.get_file(url))
-        r1 = self.getverify1(filePath)
-        print '验证码-F1:',r1
-        r2 = self.getverify2(filePath)
-        print '验证码-F2:', r2
-
-        if len(r1) != len(r2) and len(r1)==4:
-            return r1
-        else:
-            return r2
+        self.getCheckNum(filePath)
 
     def getCheckNum(self,filePath):
         r1 = self.getverify1(filePath)
         print '验证码-F1:',r1
         r2 = self.getverify2(filePath)
         print '验证码-F2:', r2
-
+        r=''
         if len(r1) != len(r2) and len(r1)==4:
-            return r1
+            r = r1
         else:
-            return r2
+            r = r2
+        print '验证码-R:', r
+        return r
 
 
 
@@ -270,16 +267,6 @@ class CheckNum:
 if __name__ == '__main__':
     #run()
     url='http://cpzjwyy.bjchp.gov.cn/common/CheckImage.aspx'
-    save_file("123.jpg", get_file(url))
 
-
-    file='123.jpg'
-
-    img = Image.open(file)
-    enhancer = ImageEnhance.Contrast(img)
-    image_enhancer = enhancer.enhance(3)
-    vcode = pytesseract.image_to_string(img)
-    print 'as['+vcode+']'
-
-    print 'bs['+getverify1(file)+']'
-    print 'cs['+getverify2(file)+']'
+    cn = CheckNum()
+    cn.getCheckNumByUrl(url)
