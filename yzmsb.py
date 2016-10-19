@@ -3,6 +3,7 @@
 
 import urllib2
 import cookielib
+import datetime
 from os import path
 
 import pytesseract
@@ -90,7 +91,7 @@ class CheckNum:
 
         # 识别
         #text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
-        text = pytesseract.image_to_string(out)
+        text = pytesseract.image_to_string(out, config='digit -psm 7')
         # 识别对吗
         text = text.strip()
         text = text.upper()
@@ -121,8 +122,8 @@ class CheckNum:
         for x in range(width):
             for y in range(hight):
                 r,g,b=pixdata[x,y]
-                #if r>(g+b)*1.5 and r>90:
-                if r > (g + b) * 1.5:
+                if r>(g+b)*1.2 and r>80:
+                #if r > (g + b) * 1.2:
                     pixdata_ry[x,y] = 0
                 else:
                     pixdata_ry[x, y] = 1
@@ -141,7 +142,8 @@ class CheckNum:
                     out1[x, y] = 0
         out.save(path.join(path.dirname(name), '29b'+path.basename(name)))
         # 识别
-        text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
+        #text = pytesseract.image_to_string(out,config='-tessedit_char_whitelist=0123456789')
+        text = pytesseract.image_to_string(out,config = 'digit nobatch -psm 6')
         #text = pytesseract.image_to_string(out)
         # 识别对吗
         text = text.strip()
@@ -245,7 +247,8 @@ class CheckNum:
                       + img.getpixel((x + 1, y + 1))
                 return 9 - sum
     def getCheckNumByUrl(self,url):
-        filePath = "checknum.jpg"
+        strtime = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        filePath = strtime+"checknum.jpg"
         self.save_file(filePath, self.get_file(url))
         self.getCheckNum(filePath)
 

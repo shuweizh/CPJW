@@ -24,7 +24,7 @@ class ReqWeb:
             'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6',
             'Cache-Control': 'max-age=0',
-            #'Connection': 'keep-alive',
+            'Connection': 'keep-alive',
             'Host': 'cpzjwyy.bjchp.gov.cn',
             'Upgrade-Insecure-Requests': '1',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'
@@ -85,7 +85,8 @@ class WebOp:
             #'Connection': 'keep-alive',
             'Host': 'cpzjwyy.bjchp.gov.cn',
             'Upgrade-Insecure-Requests': '1',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'
+            'User-Agent'
+            '': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36'
         }
     def ungzip_html(self, response):
         try:  # try decompress
@@ -203,6 +204,7 @@ class CPJW:
         self.getCheckNum()
 
         result = self.web.post(self.login_url,loginparams)
+        print result
         if result.__contains__('欢迎使用昌平区房产权属登记中心网上预约系统'):
             print '登录成功'
 
